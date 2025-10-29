@@ -5,11 +5,14 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^6.26.2",
     "react-scripts": "^5.0.1"
   },
   "scripts": {
     "start": "react-scripts start",
+    "start:mock": "cross-env REACT_APP_USE_MOCK=true react-scripts start",
     "build": "react-scripts build",
+    "build:mock": "cross-env REACT_APP_USE_MOCK=true react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

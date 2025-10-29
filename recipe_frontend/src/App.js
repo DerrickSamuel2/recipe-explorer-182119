@@ -1,48 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
+import { AppProvider } from './context/AppContext';
+import NavBar from './components/NavBar';
+import RecipesListPage from './routes/RecipesListPage';
+import RecipeDetailsPage from './routes/RecipeDetailsPage';
+import RecipeFormPage from './routes/RecipeFormPage';
 
 // PUBLIC_INTERFACE
 function App() {
-  const [theme, setTheme] = useState('light');
-
-  // Effect to apply theme to document element
+  /** Maintain a lightweight theme toggle and persist in localStorage */
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
   }, [theme]);
 
   // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
+  const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-        </button>
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Current theme: <strong>{theme}</strong>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <BrowserRouter>
+      <AppProvider>
+        <div>
+          <NavBar onToggleTheme={toggleTheme} theme={theme} />
+          <main className="container">
+            <Routes>
+              <Route path="/" element={<Navigate to="/recipes" replace />} />
+              <Route path="/recipes" element={<RecipesListPage />} />
+              <Route path="/recipes/new" element={<RecipeFormPage />} />
+              <Route path="/recipes/:id" element={<RecipeDetailsPage />} />
+              <Route path="*" element={<div>Not Found</div>} />
+            </Routes>
+          </main>
+        </div>
+      </AppProvider>
+    </BrowserRouter>
   );
 }
 
