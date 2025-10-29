@@ -28,27 +28,49 @@ export async function apiDelete(path, opts = {}) {
   return request('DELETE', path, null, opts);
 }
 
+function joinUrl(base, path) {
+  const b = String(base).replace(/\/*$/, '');
+  const p = String(path || '');
+  return `${b}${p.startsWith('/') ? '' : '/'}${p}`;
+}
+
 async function request(method, path, body, opts) {
   const base = config.getApiBase();
-  const url = `${base}${path.startsWith('/') ? '' : '/'}${path}`;
+  const url = joinUrl(base, path);
+
   const headers = {
-    'Content-Type': 'application/json',
-    ...(opts.headers || {})
+    ...(opts.headers || {}),
   };
-  const res = await fetch(url, {
-    method,
-    headers,
-    body: body != null ? JSON.stringify(body) : undefined,
-  });
-  let data = null;
-  const text = await res.text();
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch {
-    data = text;
+  if (body != null && !('Content-Type' in headers)) {
+    headers['Content-Type'] = 'application/json';
   }
+
+  let res;
+  try {
+    res = await fetch(url, {
+      method,
+      headers,
+      body: body != null ? JSON.stringify(body) : undefined,
+    });
+  } catch (networkErr) {
+    const err = new Error('Network error contacting API');
+    err.cause = networkErr;
+    throw err;
+  }
+
+  const raw = await res.text();
+  let data;
+  try {
+    data = raw ? JSON.parse(raw) : null;
+  } catch {
+    data = raw;
+  }
+
   if (!res.ok) {
-    const err = new Error((data && data.message) || `Request failed: ${res.status}`);
+    const message =
+      (data && (data.error || data.message)) ||
+      `Request failed: ${res.status} ${res.statusText}`;
+    const err = new Error(message);
     err.status = res.status;
     err.data = data;
     throw err;
